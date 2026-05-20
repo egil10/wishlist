@@ -1,20 +1,32 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Wishlist · Budget Analyzer · Norway 2026</title>
-  <meta name="description" content="Norwegian pricing across budget, optimal, and premium tiers — pick a tier per item, see the basket total update live." />
+  <meta name="description" content="Norwegian wishlist budget — eight categories, dozens of products, 12-month price history. Pick a product per category, watch the basket update live." />
+  <meta name="color-scheme" content="dark light" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='80' font-size='80'%3E%F0%9F%9B%92%3C/text%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="./styles.css" />
+  <script>
+    // Apply theme before paint to avoid flash
+    (function () {
+      try {
+        var t = localStorage.getItem('wishlist.theme');
+        if (!t) t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
-  <div class="grid-bg" aria-hidden="true"></div>
-  <div class="glow glow-1" aria-hidden="true"></div>
-  <div class="glow glow-2" aria-hidden="true"></div>
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="bg-glow bg-glow-1" aria-hidden="true"></div>
+  <div class="bg-glow bg-glow-2" aria-hidden="true"></div>
+  <div class="bg-glow bg-glow-3" aria-hidden="true"></div>
 
   <header class="topbar">
     <div class="container topbar-inner">
@@ -27,57 +39,93 @@
       <nav class="topbar-nav">
         <a href="#items">Items</a>
         <a href="#breakdown">Breakdown</a>
+        <a href="#evolution">Trend</a>
         <a href="https://github.com/egil10/wishlist" target="_blank" rel="noopener">GitHub</a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle theme">
+          <svg class="icon-sun"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"></svg>
+        </button>
       </nav>
     </div>
   </header>
 
   <main class="container">
     <section class="hero">
-      <span class="eyebrow">Norway · 2026 · indicative pricing</span>
-      <h1 class="hero-title">Build the optimal basket.</h1>
+      <span class="eyebrow"><span class="eyebrow-dot"></span>Norway · 2026 · <span id="eyebrow-counts">64 products · 8 categories</span></span>
+      <h1 class="hero-title">Build the <span class="hero-accent">optimal</span> basket.</h1>
       <p class="hero-sub">
-        Eight things on the wishlist, priced across Norwegian retailers in three tiers.
-        Pick a tier per item — the total updates live.
+        Real Norwegian retail pricing across <strong id="hero-product-count">64</strong> products in <strong>8</strong> categories, with 12 months of price history. Pick a product per category — totals and trend update live.
       </p>
 
       <div class="presets" role="group" aria-label="Tier presets">
-        <button class="preset" data-preset="budget"><span class="dot dot-budget"></span>Cheapest</button>
-        <button class="preset is-active" data-preset="optimal"><span class="dot dot-optimal"></span>Optimal</button>
-        <button class="preset" data-preset="premium"><span class="dot dot-premium"></span>Premium</button>
-        <button class="preset" data-preset="smart"><span class="dot dot-smart"></span>Smart mix</button>
+        <button class="preset" data-preset="cheapest" type="button"><span class="dot dot-budget"></span>Cheapest</button>
+        <button class="preset is-active" data-preset="optimal" type="button"><span class="dot dot-optimal"></span>Optimal</button>
+        <button class="preset" data-preset="premium" type="button"><span class="dot dot-premium"></span>Premium</button>
+        <button class="preset" data-preset="smart" type="button"><span class="dot dot-smart"></span>Smart mix</button>
       </div>
+
+      <nav class="cat-nav" aria-label="Category jump">
+        <!-- filled by app.js -->
+      </nav>
     </section>
 
     <section class="stats" aria-label="Basket totals">
       <div class="stat stat-selected">
         <div class="stat-label">Selected basket</div>
         <div class="stat-value" id="total-selected">—</div>
-        <div class="stat-meta" id="total-selected-meta">8 items</div>
+        <div class="stat-meta" id="total-selected-meta">—</div>
       </div>
-      <div class="stat">
+      <div class="stat stat-budget">
         <div class="stat-label"><span class="dot dot-budget"></span>Cheapest possible</div>
-        <div class="stat-value" id="total-budget">—</div>
-        <div class="stat-meta">all-budget basket</div>
+        <div class="stat-value" id="total-cheapest">—</div>
+        <div class="stat-meta">lowest in every category</div>
       </div>
-      <div class="stat">
+      <div class="stat stat-optimal">
         <div class="stat-label"><span class="dot dot-optimal"></span>Optimal</div>
         <div class="stat-value" id="total-optimal">—</div>
         <div class="stat-meta">best value per item</div>
       </div>
-      <div class="stat">
+      <div class="stat stat-premium">
         <div class="stat-label"><span class="dot dot-premium"></span>Premium</div>
         <div class="stat-value" id="total-premium">—</div>
-        <div class="stat-meta">top-tier across the board</div>
+        <div class="stat-meta">top of the line</div>
       </div>
     </section>
 
-    <section id="items" class="items" aria-label="Wishlist items">
+    <section id="items" class="items">
       <div class="section-head">
-        <h2>The list</h2>
-        <p>Click a tier on any card to swap it in.</p>
+        <h2>The catalog</h2>
+        <p>Eight per category. Click a card to swap it into the basket.</p>
       </div>
-      <div class="items-grid" id="items-grid"></div>
+      <div id="categories"><!-- filled by app.js --></div>
+    </section>
+
+    <section id="evolution" class="evolution">
+      <div class="section-head">
+        <h2>Basket trend · last 12 months</h2>
+        <p>How your current selection would have priced month by month — with the Black Friday dip.</p>
+      </div>
+      <div class="evo-card">
+        <div class="evo-meta">
+          <div class="evo-stat">
+            <div class="evo-stat-label">Now</div>
+            <div class="evo-stat-value" id="evo-now">—</div>
+          </div>
+          <div class="evo-stat">
+            <div class="evo-stat-label">12 mo ago</div>
+            <div class="evo-stat-value" id="evo-then">—</div>
+          </div>
+          <div class="evo-stat">
+            <div class="evo-stat-label">Lowest in period</div>
+            <div class="evo-stat-value" id="evo-min">—</div>
+          </div>
+          <div class="evo-stat">
+            <div class="evo-stat-label">Change</div>
+            <div class="evo-stat-value" id="evo-change">—</div>
+          </div>
+        </div>
+        <div class="evo-chart" id="evo-chart" aria-label="Basket cost over the last 12 months"></div>
+      </div>
     </section>
 
     <section id="breakdown" class="breakdown">
@@ -85,12 +133,12 @@
         <h2>Tier comparison</h2>
         <p>How the three baskets stack up against each other.</p>
       </div>
-      <div class="bars" id="bars"></div>
+      <div class="bars" id="bars"><!-- filled by app.js --></div>
     </section>
 
     <footer class="footer">
       <p>
-        Prices are indicative shelf prices from major Norwegian retailers (Komplett, Elkjøp, Power, XXL, 4Sound, Sport1, Hi-Fi Klubben, Tennishuset, Løplabbet, Birk Sport, Multicom, G-Sport, Gear4Music). Check the retailer before buying — sales and stock vary.
+        Prices are indicative shelf prices from major Norwegian retailers (Komplett, Elkjøp, Power, XXL, 4Sound, Sport1, Hi-Fi Klubben, Tennishuset, Løplabbet, Birk Sport, Multicom, G-Sport, Gear4Music, Eplehuset, PCSpesialisten, Anton Sport, Norsk Musikk, Audiophile.no). Price history is modelled — verify at the retailer before buying.
       </p>
       <p class="footer-meta">
         <span>NOK · inkl. mva</span>
@@ -100,44 +148,51 @@
     </footer>
   </main>
 
-  <template id="item-card-template">
-    <article class="card" data-item-id="">
-      <div class="card-head">
-        <div class="card-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></svg>
+  <template id="category-template">
+    <section class="cat" data-cat-id="">
+      <header class="cat-head">
+        <div class="cat-head-left">
+          <div class="cat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></svg></div>
+          <div class="cat-title-block">
+            <h3 class="cat-name"></h3>
+            <p class="cat-sub"></p>
+          </div>
         </div>
-        <div class="card-titles">
-          <div class="card-title"></div>
-          <div class="card-sub"></div>
+        <div class="cat-head-right">
+          <span class="cat-range"></span>
+          <span class="cat-selected-name"></span>
         </div>
-        <div class="card-price">
-          <div class="card-price-value"></div>
-          <div class="card-price-label">selected</div>
-        </div>
-      </div>
+      </header>
+      <div class="cat-grid"></div>
+    </section>
+  </template>
 
-      <div class="card-product">
-        <div class="card-product-name"></div>
-        <div class="card-product-meta">
-          <span class="card-retailer"></span>
-          <span class="card-note"></span>
+  <template id="product-template">
+    <article class="prod" data-product-id="" tabindex="0">
+      <header class="prod-head">
+        <span class="tier-badge" data-tier=""></span>
+        <span class="prod-rating"><span class="star">★</span><span class="rating-value"></span><span class="rating-count"></span></span>
+      </header>
+      <div class="prod-body">
+        <div class="prod-title"></div>
+        <div class="prod-brand"></div>
+        <div class="prod-specs"></div>
+      </div>
+      <div class="prod-chart"></div>
+      <div class="prod-price-row">
+        <div class="prod-price">
+          <div class="prod-price-value"></div>
+          <div class="prod-change"></div>
+        </div>
+        <div class="prod-retailers">
+          <div class="prod-retailer-cheap"></div>
+          <div class="prod-retailer-more"></div>
         </div>
       </div>
-
-      <div class="tiers" role="tablist">
-        <button class="tier" data-tier="budget" role="tab">
-          <span class="tier-label"><span class="dot dot-budget"></span>Cheap</span>
-          <span class="tier-price"></span>
-        </button>
-        <button class="tier" data-tier="optimal" role="tab">
-          <span class="tier-label"><span class="dot dot-optimal"></span>Optimal</span>
-          <span class="tier-price"></span>
-        </button>
-        <button class="tier" data-tier="premium" role="tab">
-          <span class="tier-label"><span class="dot dot-premium"></span>Premium</span>
-          <span class="tier-price"></span>
-        </button>
-      </div>
+      <button class="prod-select" type="button">
+        <span class="prod-select-label">Add to basket</span>
+        <svg class="prod-select-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"></svg>
+      </button>
     </article>
   </template>
 
