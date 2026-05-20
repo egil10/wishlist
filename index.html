@@ -168,7 +168,8 @@
   </template>
 
   <template id="product-template">
-    <article class="prod" data-product-id="" tabindex="0">
+    <article class="prod" data-product-id="" tabindex="0" role="button" aria-label="Open product details">
+      <div class="prod-image" aria-hidden="true"></div>
       <header class="prod-head">
         <span class="tier-badge" data-tier=""></span>
         <span class="prod-rating"><span class="star">★</span><span class="rating-value"></span><span class="rating-count"></span></span>
@@ -189,12 +190,79 @@
           <div class="prod-retailer-more"></div>
         </div>
       </div>
-      <button class="prod-select" type="button">
-        <span class="prod-select-label">Add to basket</span>
-        <svg class="prod-select-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"></svg>
-      </button>
+      <div class="prod-actions">
+        <button class="prod-select" type="button">
+          <span class="prod-select-label">Add to basket</span>
+          <svg class="prod-select-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"></svg>
+        </button>
+        <button class="prod-details" type="button" aria-label="View product details">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12s3.5-7 9-7 9 7 9 7-3.5 7-9 7-9-7-9-7z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
     </article>
   </template>
+
+  <div class="modal-backdrop" id="modal-backdrop" hidden>
+    <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <button class="modal-close" id="modal-close" type="button" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"></svg>
+      </button>
+      <div class="modal-hero" id="modal-hero" aria-hidden="true"></div>
+      <div class="modal-content">
+        <header class="modal-header">
+          <div class="modal-meta-row">
+            <span class="tier-badge" id="modal-tier"></span>
+            <span class="prod-rating">
+              <span class="star">★</span>
+              <span id="modal-rating-value"></span>
+              <span class="rating-count" id="modal-rating-count"></span>
+            </span>
+          </div>
+          <h2 id="modal-title">—</h2>
+          <div class="modal-brand-row">
+            <span id="modal-brand">—</span>
+            <span class="modal-sep">·</span>
+            <span id="modal-year">—</span>
+          </div>
+          <p class="modal-specs" id="modal-specs">—</p>
+        </header>
+
+        <section class="modal-section">
+          <div class="modal-section-head">
+            <h3>12-month price history</h3>
+            <span class="modal-section-sub" id="modal-chart-sub">indicative monthly low</span>
+          </div>
+          <div class="modal-stats">
+            <div class="modal-stat"><div class="modal-stat-label">Now</div><div class="modal-stat-value" id="modal-stat-now">—</div></div>
+            <div class="modal-stat"><div class="modal-stat-label">12 mo ago</div><div class="modal-stat-value" id="modal-stat-then">—</div></div>
+            <div class="modal-stat"><div class="modal-stat-label">Lowest</div><div class="modal-stat-value" id="modal-stat-low">—</div></div>
+            <div class="modal-stat"><div class="modal-stat-label">Change</div><div class="modal-stat-value" id="modal-stat-change">—</div></div>
+          </div>
+          <div class="modal-chart" id="modal-chart"></div>
+        </section>
+
+        <section class="modal-section">
+          <div class="modal-section-head">
+            <h3>Where to buy</h3>
+            <a id="modal-prisjakt" class="prisjakt-cta" href="#" target="_blank" rel="noopener nofollow">
+              Compare on Prisjakt
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"></svg>
+            </a>
+          </div>
+          <ul class="retailer-list" id="modal-retailers"></ul>
+          <p class="modal-disclaimer">Links open the retailer's search results in a new tab. Prices listed are indicative — verify on the retailer's page before buying.</p>
+        </section>
+
+        <footer class="modal-footer">
+          <button class="btn btn-secondary" id="modal-cancel" type="button">Close</button>
+          <button class="btn btn-primary" id="modal-add" type="button">
+            <span id="modal-add-label">Add to basket</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+        </footer>
+      </div>
+    </div>
+  </div>
 
   <script src="./data.js"></script>
   <script src="./app.js"></script>

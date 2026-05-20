@@ -193,6 +193,71 @@ for (const cat of CATEGORIES) {
   });
 }
 
+/* ──────────────────────────────────────────────────────────────────────
+ * Retailer URLs — best-effort search URL pattern per Norwegian retailer.
+ * Falls back to a Google site-scoped search for retailers we don't have a
+ * direct pattern for. Edit any pattern below if a retailer's URL changes.
+ */
+const RETAILER_DOMAINS = {
+  'Komplett':       'komplett.no',
+  'Elkjøp':         'elkjop.no',
+  'Power':          'power.no',
+  'XXL':            'xxl.no',
+  'Sport1':         'sport1.no',
+  '4Sound':         '4sound.no',
+  'Gear4Music':     'gear4music.no',
+  'Norsk Musikk':   'norskmusikk.com',
+  'Multicom':       'multicom.no',
+  'PCSpesialisten': 'pcspesialisten.no',
+  'Hi-Fi Klubben':  'hifiklubben.no',
+  'Tennishuset':    'tennishuset.no',
+  'Løplabbet':      'loplabbet.no',
+  'Birk Sport':     'birksport.no',
+  'G-Sport':        'gsport.no',
+  'Intersport':     'intersport.no',
+  'Eplehuset':      'eplehuset.no',
+  'Anton Sport':    'antonsport.no',
+  'Bergans':        'bergans.com',
+  'Audiophile.no':  'audiophile.no',
+  'Telenor':        'telenor.no'
+};
+
+const RETAILER_URLS = {
+  'Komplett':       (q) => `https://www.komplett.no/search?q=${encodeURIComponent(q)}`,
+  'Elkjøp':         (q) => `https://www.elkjop.no/search?searchTerm=${encodeURIComponent(q)}`,
+  'Power':          (q) => `https://www.power.no/search/?q=${encodeURIComponent(q)}`,
+  'XXL':            (q) => `https://www.xxl.no/search?query=${encodeURIComponent(q)}`,
+  'Sport1':         (q) => `https://www.sport1.no/search?q=${encodeURIComponent(q)}`,
+  '4Sound':         (q) => `https://www.4sound.no/search?q=${encodeURIComponent(q)}`,
+  'Gear4Music':     (q) => `https://www.gear4music.no/search?search=${encodeURIComponent(q)}`,
+  'Norsk Musikk':   (q) => `https://www.norskmusikk.com/search?type=product&q=${encodeURIComponent(q)}`,
+  'Multicom':       (q) => `https://www.multicom.no/search?text=${encodeURIComponent(q)}`,
+  'PCSpesialisten': (q) => `https://www.pcspesialisten.no/?s=${encodeURIComponent(q)}`,
+  'Hi-Fi Klubben':  (q) => `https://www.hifiklubben.no/sok/?q=${encodeURIComponent(q)}`,
+  'Tennishuset':    (q) => `https://tennishuset.no/?s=${encodeURIComponent(q)}`,
+  'Løplabbet':      (q) => `https://www.loplabbet.no/?s=${encodeURIComponent(q)}`,
+  'Birk Sport':     (q) => `https://www.birksport.no/search?q=${encodeURIComponent(q)}`,
+  'G-Sport':        (q) => `https://www.gsport.no/search?q=${encodeURIComponent(q)}`,
+  'Intersport':     (q) => `https://www.intersport.no/search?q=${encodeURIComponent(q)}`,
+  'Eplehuset':      (q) => `https://www.eplehuset.no/sok?q=${encodeURIComponent(q)}`,
+  'Anton Sport':    (q) => `https://antonsport.no/?s=${encodeURIComponent(q)}`,
+  'Bergans':        (q) => `https://www.bergans.com/no/search?q=${encodeURIComponent(q)}`,
+  'Audiophile.no':  (q) => `https://www.audiophile.no/?s=${encodeURIComponent(q)}`,
+  'Telenor':        (q) => `https://www.telenor.no/handle/mobil/?search=${encodeURIComponent(q)}`
+};
+
+function retailerUrl(retailer, productName) {
+  const fn = RETAILER_URLS[retailer];
+  if (fn) return fn(productName);
+  const domain = RETAILER_DOMAINS[retailer];
+  if (domain) return `https://www.google.com/search?q=site%3A${domain}+${encodeURIComponent(productName)}`;
+  return `https://www.google.com/search?q=${encodeURIComponent(retailer + ' ' + productName)}`;
+}
+
+function prisjaktUrl(productName) {
+  return `https://www.prisjakt.no/search?search=${encodeURIComponent(productName)}`;
+}
+
 // Inline SVG icon paths (Lucide-style 24×24 stroke icons)
 const ICONS = {
   monitor: '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>',
@@ -205,5 +270,8 @@ const ICONS = {
   speaker: '<rect x="4" y="2" width="16" height="20" rx="2"/><circle cx="12" cy="14" r="4"/><circle cx="12" cy="6" r="1"/>',
   sun:     '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>',
   moon:    '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>',
-  check:   '<polyline points="20 6 9 17 4 12"/>'
+  check:   '<polyline points="20 6 9 17 4 12"/>',
+  close:   '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+  arrow:   '<line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>',
+  external:'<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>'
 };
