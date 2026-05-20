@@ -8,6 +8,7 @@
 
 const STORAGE_SEL = 'wishlist.selection.v2';
 const STORAGE_THEME = 'wishlist.theme';
+const STORAGE_IMAGES = 'wishlist.images.v3';
 
 const nokFmt = new Intl.NumberFormat('nb-NO', {
   style: 'currency',
@@ -26,6 +27,98 @@ const monthLabels = (() => {
   }
   return out;
 })();
+
+/* ── Wikipedia image fetcher ───────────────────────────────────────── */
+const imageCache = Object.create(null);
+let _imagePersistTimer = 0;
+
+function loadImageCache() {
+  try {
+    const raw = localStorage.getItem(STORAGE_IMAGES);
+    if (raw) Object.assign(imageCache, JSON.parse(raw));
+  } catch {}
+}
+function schedulePersistImageCache() {
+  clearTimeout(_imagePersistTimer);
+  _imagePersistTimer = setTimeout(() => {
+    try { localStorage.setItem(STORAGE_IMAGES, JSON.stringify(imageCache)); } catch {}
+  }, 500);
+}
+
+async function fetchProductImage(product) {
+  if (product.id in imageCache) return imageCache[product.id];
+  const q = product.wikiQuery || `${product.brand} ${product.name}`;
+  const url = `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=pageimages&piprop=thumbnail&pithumbsize=480&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrlimit=1&origin=*`;
+  try {
+    const res = await fetch(url, { credentials: 'omit' });
+    if (!res.ok) {
+      imageCache[product.id] = null;
+      schedulePersistImageCache();
+      return null;
+    }
+    const data = await res.json();
+    const pages = data && data.query && data.query.pages;
+    let thumb = null;
+    if (pages) {
+      const firstPage = Object.values(pages)[0];
+      thumb = (firstPage && firstPage.thumbnail && firstPage.thumbnail.source) || null;
+    }
+    imageCache[product.id] = thumb;
+    schedulePersistImageCache();
+    return thumb;
+  } catch {
+    imageCache[product.id] = null;
+    schedulePersistImageCache();
+    return null;
+  }
+}
+
+function applyRealImage(container, product, alt) {
+  if (!container) return;
+  // Tag the container so a late-arriving fetch for an older product can't clobber it
+  container.dataset.imgForProduct = product.id;
+  fetchProductImage(product).then((url) => {
+    if (!url) return;
+    if (container.dataset.imgForProduct !== product.id) return;
+    const img = new Image();
+    img.alt = alt || `${product.brand} ${product.name}`;
+    img.loading = 'lazy';
+    img.referrerPolicy = 'no-referrer';
+    img.style.opacity = '0';
+    img.style.transition = 'opacity 320ms ease';
+    img.onload = () => {
+      if (container.dataset.imgForProduct !== product.id) return;
+      container.classList.add('has-real-image');
+      container.innerHTML = '';
+      container.appendChild(img);
+      requestAnimationFrame(() => { img.style.opacity = '1'; });
+    };
+    img.onerror = () => {};
+    img.src = url;
+  });
+}
+
+let imageObserver = null;
+function setupImageObserver() {
+  if (!('IntersectionObserver' in window)) {
+    // No IO: just load eagerly during render
+    imageObserver = null;
+    return;
+  }
+  imageObserver = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      const node = entry.target;
+      const productId = node.dataset.productId;
+      const product = productById(productId);
+      if (product) {
+        const container = node.querySelector('.prod-image');
+        if (container) applyRealImage(container, product);
+      }
+      imageObserver.unobserve(node);
+    }
+  }, { rootMargin: '300px 0px' });
+}
 
 /* ── Text escaping ─────────────────────────────────────────────────── */
 function escapeHtml(s) {
@@ -307,6 +400,10 @@ function buildProductCard(product, category) {
     openModal(product.id);
   });
 
+  // Lazy-load the real product image (Wikipedia search) as the card scrolls in
+  if (imageObserver) imageObserver.observe(node);
+  else applyRealImage(node.querySelector('.prod-image'), product);
+
   return node;
 }
 
@@ -519,7 +616,10 @@ function openModal(productId) {
   modal.style.setProperty('--cat-accent', category.accent);
   modal.dataset.productId = productId;
 
-  document.getElementById('modal-hero').innerHTML = buildProductArt(product, category);
+  const heroContainer = document.getElementById('modal-hero');
+  heroContainer.classList.remove('has-real-image');
+  heroContainer.innerHTML = buildProductArt(product, category);
+  applyRealImage(heroContainer, product, product.name);
 
   const tier = document.getElementById('modal-tier');
   tier.textContent = product.tierLabel;
@@ -684,6 +784,8 @@ function fillStaticCounts() {
 
 /* ── Boot ──────────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
+  loadImageCache();
+  setupImageObserver();
   fillStaticCounts();
   renderCatNav();
   renderCategories();
